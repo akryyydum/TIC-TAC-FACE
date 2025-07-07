@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ImageUploader from './components/ImageUploader';
 import Board from './components/Board';
 import './App.css';
+import Confetti from 'react-confetti';
 
 const emptyBoard = [
   [null, null, null],
@@ -20,6 +21,10 @@ function App() {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [namesSubmitted, setNamesSubmitted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Animation state for board and winner
+  const [animateWinner, setAnimateWinner] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.remove('light', 'dark');
@@ -55,7 +60,13 @@ function App() {
           ? { ...prev, x: prev.x + 1 }
           : { ...prev, o: prev.o + 1 }
         );
-        setTimeout(() => alert(`Player ${i+1} wins!`), 100);
+        setShowConfetti(true);
+        setAnimateWinner(true);
+        setTimeout(() => {
+          alert(`Player ${i+1} wins!`);
+          setShowConfetti(false);
+          setAnimateWinner(false);
+        }, 100);
         return;
       }
     }
@@ -73,32 +84,56 @@ function App() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#1a232c',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px 8px',
-      width: '100%',
-      maxWidth: '100vw',
-      boxSizing: 'border-box',
-      fontFamily: 'Inter, Arial, sans-serif'
-    }}>
-      {/* Logo/Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#1a232c',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 8px',
+        width: '100%',
+        maxWidth: '100vw',
+        boxSizing: 'border-box',
+        fontFamily: 'Inter, Arial, sans-serif',
+        transition: 'background 0.5s'
+      }}
+    >
+      {/* Confetti on win */}
+      {showConfetti && (
+        <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          numberOfPieces={250}
+          recycle={false}
+        />
+      )}
+
+      {/* Logo/Title with animation */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: 18,
+          transform: animateWinner ? 'scale(1.15)' : 'scale(1)',
+          transition: 'transform 0.4s cubic-bezier(.68,-0.55,.27,1.55)'
+        }}
+      >
         <span style={{
           fontWeight: 'bold',
           fontSize: 32,
           color: '#2ec4b6',
-          letterSpacing: 2
+          letterSpacing: 2,
+          transition: 'color 0.3s'
         }}>x</span>
         <span style={{
           fontWeight: 'bold',
           fontSize: 32,
           color: '#ffbe3b',
-          letterSpacing: 2
+          letterSpacing: 2,
+          transition: 'color 0.3s'
         }}>o</span>
       </div>
 
@@ -120,7 +155,8 @@ function App() {
             flexDirection: 'column',
             alignItems: 'center',
             margin: '0 auto 28px auto',
-            gap: 18
+            gap: 18,
+            animation: 'fadeInUp 0.7s'
           }}
         >
           <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Enter Player Names</div>
@@ -189,7 +225,8 @@ function App() {
             gap: 32,
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto'
+            margin: '0 auto',
+            animation: 'fadeInUp 0.7s'
           }}
         >
           {[1, 2].map((player) => (
@@ -245,12 +282,25 @@ function App() {
         </div>
       ) : namesSubmitted ? (
         <>
-          <Board board={board} onTileClick={handleTileClick} />
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              animation: animateWinner ? 'winnerPulse 0.7s' : 'fadeInUp 0.7s'
+            }}
+          >
+            <Board board={board} onTileClick={handleTileClick} />
+          </div>
           <button
             onClick={restart}
             className="restart-btn"
             aria-label="Restart"
             title="Restart"
+            style={{
+              animation: 'fadeInUp 0.7s'
+            }}
           >
             <svg width="22" height="22" viewBox="0 0 22 22" style={{ verticalAlign: 'middle', marginRight: 6 }}>
               <path d="M11 2v2.5a6.5 6.5 0 1 1-6.5 6.5" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round"/>
@@ -263,7 +313,12 @@ function App() {
 
       {/* Turn Indicator */}
       {namesSubmitted && player1Img && player2Img && (
-        <div className="turn-indicator">
+        <div
+          className="turn-indicator"
+          style={{
+            animation: 'fadeInUp 0.7s'
+          }}
+        >
           <span style={{
             color: currPlayer === 1 ? '#2ec4b6' : '#ffbe3b',
             fontWeight: 'bold',
@@ -278,7 +333,12 @@ function App() {
 
       {/* Score Bar */}
       {namesSubmitted && player1Img && player2Img && (
-        <div className="score-bar">
+        <div
+          className="score-bar"
+          style={{
+            animation: 'fadeInUp 0.7s'
+          }}
+        >
           <div className="score-box score-x">
             {(player1Name || 'X').toUpperCase()}
             <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 2 }}>{score.x}</div>
@@ -293,6 +353,22 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Animation keyframes */}
+      <style>
+        {`
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(30px);}
+          100% { opacity: 1; transform: translateY(0);}
+        }
+        @keyframes winnerPulse {
+          0% { transform: scale(1);}
+          30% { transform: scale(1.15);}
+          60% { transform: scale(0.95);}
+          100% { transform: scale(1);}
+        }
+        `}
+      </style>
     </div>
   );
 }

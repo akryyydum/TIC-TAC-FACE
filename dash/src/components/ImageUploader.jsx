@@ -11,6 +11,7 @@ const ImageUploader = ({ onSelectImage, player }) => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [mediaSupported, setMediaSupported] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [faceDetected, setFaceDetected] = useState(null);
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -31,6 +32,31 @@ const ImageUploader = ({ onSelectImage, player }) => {
       setMediaSupported(false);
     }
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (showCam && webcamRef.current) {
+      // Start face detection polling
+      interval = setInterval(async () => {
+        const video = webcamRef.current.video;
+        if (video && video.readyState === 4) {
+          const net = await bodyPix.load();
+          const segmentation = await net.segmentPerson(video, {
+            internalResolution: 'low',
+            segmentationThreshold: 0.7,
+          });
+          // If any pixel is foreground, assume face detected
+          const detected = segmentation.data.some((v) => v === 1);
+          setFaceDetected(detected);
+        }
+      }, 1000);
+    } else {
+      setFaceDetected(null);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showCam]);
 
   const capture = async () => {
     setLoading(true);
@@ -133,7 +159,9 @@ const ImageUploader = ({ onSelectImage, player }) => {
         gap: 12,
         background: '#232e3a',
         borderRadius: 14,
-        boxShadow: '0 2px 10px #0002'
+        boxShadow: '0 2px 10px #0002',
+        position: 'relative',
+        animation: 'fadeInUp 0.7s'
       }}
     >
       {loading && (
@@ -149,13 +177,15 @@ const ImageUploader = ({ onSelectImage, player }) => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 14
+          borderRadius: 14,
+          animation: 'fadeIn 0.5s'
         }}>
           <div style={{
             color: '#2ec4b6',
             fontWeight: 700,
             fontSize: 18,
-            marginBottom: 12
+            marginBottom: 12,
+            animation: 'popIn 0.6s'
           }}>
             Removing background...
           </div>
@@ -168,7 +198,11 @@ const ImageUploader = ({ onSelectImage, player }) => {
             animation: 'spin 1s linear infinite'
           }} />
           <style>
-            {`@keyframes spin { 100% { transform: rotate(360deg); } }`}
+            {`
+              @keyframes spin { 100% { transform: rotate(360deg); } }
+              @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+              @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+            `}
           </style>
         </div>
       )}
@@ -177,7 +211,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
         color: '#fff',
         fontSize: 16,
         margin: '10px 0 2px 0',
-        letterSpacing: 0.5
+        letterSpacing: 0.5,
+        animation: 'fadeInUp 0.7s'
       }}>
         {typeof player === 'string' ? player : `Player ${player}`}: Upload or Capture
       </p>
@@ -192,7 +227,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
           background: '#222e39',
           border: '1px solid #2ec4b6',
           borderRadius: 8,
-          padding: '7px 0 7px 7px'
+          padding: '7px 0 7px 7px',
+          animation: 'fadeInUp 0.7s'
         }}
       />
       <button
@@ -208,7 +244,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
           fontSize: 15,
           cursor: 'pointer',
           width: '100%',
-          transition: 'background 0.2s'
+          transition: 'background 0.2s',
+          animation: 'fadeInUp 0.7s'
         }}
       >
         {showCam ? 'Close Webcam' : 'Use Webcam'}
@@ -220,7 +257,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
           marginTop: 12,
           fontWeight: 500,
           fontSize: 14,
-          textAlign: 'center'
+          textAlign: 'center',
+          animation: 'fadeInUp 0.7s'
         }}>
           Camera not supported in this browser or connection.<br />
           Please use HTTPS and a supported browser.
@@ -234,7 +272,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 8
+          gap: 8,
+          animation: 'fadeInUp 0.7s'
         }}>
           {!isMobile && devices.length > 1 && (
             <select
@@ -268,7 +307,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
               height: 'auto',
               aspectRatio: '4/3',
               maxHeight: '60vw',
-              background: '#111'
+              background: '#111',
+              animation: 'fadeInUp 0.7s'
             }}
             screenshotFormat="image/jpeg"
             videoConstraints={{
@@ -278,7 +318,29 @@ const ImageUploader = ({ onSelectImage, player }) => {
               height: { ideal: 480 },
             }}
           />
-
+          {/* Face detected indicator */}
+          {faceDetected === true && (
+            <div style={{
+              color: '#2ec4b6',
+              fontWeight: 700,
+              fontSize: 15,
+              marginTop: 4,
+              animation: 'popIn 0.5s'
+            }}>
+              😊 Face Detected
+            </div>
+          )}
+          {faceDetected === false && (
+            <div style={{
+              color: '#ffbe3b',
+              fontWeight: 700,
+              fontSize: 15,
+              marginTop: 4,
+              animation: 'popIn 0.5s'
+            }}>
+              😐 No Face Detected
+            </div>
+          )}
           <button
             onClick={capture}
             style={{
@@ -292,7 +354,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
               fontSize: 15,
               cursor: 'pointer',
               width: '100%',
-              transition: 'background 0.2s'
+              transition: 'background 0.2s',
+              animation: 'fadeInUp 0.7s'
             }}
           >
             📸 Capture
@@ -306,7 +369,8 @@ const ImageUploader = ({ onSelectImage, player }) => {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center'
+          alignItems: 'center',
+          animation: 'fadeInUp 0.7s'
         }}>
           <p style={{
             color: '#fff',
@@ -325,11 +389,24 @@ const ImageUploader = ({ onSelectImage, player }) => {
               border: '2px solid #2ec4b6',
               borderRadius: '8px',
               objectFit: 'contain',
-              background: '#111'
+              background: '#111',
+              animation: 'popIn 0.7s'
             }}
           />
         </div>
       )}
+      <style>
+        {`
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(30px);}
+          100% { opacity: 1; transform: translateY(0);}
+        }
+        @keyframes popIn {
+          0% { transform: scale(0.7); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        `}
+      </style>
     </div>
   );
 };
