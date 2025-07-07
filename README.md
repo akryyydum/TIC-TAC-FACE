@@ -27,8 +27,7 @@ A fun, responsive Tic Tac Toe game built with **React**, **Tailwind CSS**, and *
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/minecraft-face-tictactoe.git
-cd minecraft-face-tictactoe
+git clone https://github.com/akryyydum/TIC-TAC-FACE.git
 ```
 
 ### 2. Install Dependencies
