@@ -9,8 +9,6 @@ A fun, responsive, Minecraft-styled Tic Tac Toe game built with **React**, **Tai
 * 🧑‍🤝‍🧑 Two-player mode
 * 📷 Face scan or image upload
 * ✂️ Background removal using BodyPix (TensorFlow\.js)
-* 🎨 Minecraft-style UI
-* 🌗 Light/Dark mode toggle
 * 📱 Mobile responsive layout
 
 ---
