@@ -1,6 +1,6 @@
 Face-Based Tic Tac Toe
 
-A fun, responsive, Minecraft-styled Tic Tac Toe game built with **React**, **Tailwind CSS**, and **TensorFlow\.js**. Players can upload or capture their **face** and use it as their game token with automatic **background removal**.
+A fun, responsive Tic Tac Toe game built with **React**, **Tailwind CSS**, and **TensorFlow\.js**. Players can upload or capture their **face** and use it as their game token with automatic **background removal**.
 
 ---
 
