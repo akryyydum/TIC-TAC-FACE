@@ -26,10 +26,41 @@ function App() {
   // Animation state for board and winner
   const [animateWinner, setAnimateWinner] = useState(false);
 
+  // Track winning tiles
+  const [winningTiles, setWinningTiles] = useState([]);
+
+  // Custom mouse state
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  // Loading state
+  const [loading, setLoading] = useState(true);
+  // Fade animation state
+  const [fade, setFade] = useState('in');
+
   useEffect(() => {
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const move = e => setMouse({ x: e.clientX, y: e.clientY });
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, []);
+
+  // Show loading screen for 1.2s on mount, then fade out
+  useEffect(() => {
+    const timer = setTimeout(() => setFade('out'), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Remove loading after fade out
+  useEffect(() => {
+    if (fade === 'out') {
+      const timer = setTimeout(() => setLoading(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [fade]);
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
@@ -46,28 +77,39 @@ function App() {
 
   const checkWinner = (b) => {
     const imgs = [player1Img, player2Img];
+    // All possible lines (rows, cols, diags)
+    const lines = [
+      // Rows
+      [[0,0],[0,1],[0,2]],
+      [[1,0],[1,1],[1,2]],
+      [[2,0],[2,1],[2,2]],
+      // Cols
+      [[0,0],[1,0],[2,0]],
+      [[0,1],[1,1],[2,1]],
+      [[0,2],[1,2],[2,2]],
+      // Diags
+      [[0,0],[1,1],[2,2]],
+      [[0,2],[1,1],[2,0]],
+    ];
     for (let i = 0; i < 2; i++) {
       const p = imgs[i];
-      const won = (
-        [0,1,2].some(r => b[r].every(cell => cell === p)) ||
-        [0,1,2].some(c => b.every(row => row[c] === p)) ||
-        [0,1,2].every(i => b[i][i] === p) ||
-        [0,1,2].every(i => b[i][2 - i] === p)
-      );
-      if (won) {
-        setGameOver(true);
-        setScore((prev) => i === 0
-          ? { ...prev, x: prev.x + 1 }
-          : { ...prev, o: prev.o + 1 }
-        );
-        setShowConfetti(true);
-        setAnimateWinner(true);
-        setTimeout(() => {
-          alert(`Player ${i+1} wins!`);
-          setShowConfetti(false);
-          setAnimateWinner(false);
-        }, 100);
-        return;
+      for (const line of lines) {
+        if (line.every(([r, c]) => b[r][c] === p)) {
+          setGameOver(true);
+          setScore((prev) => i === 0
+            ? { ...prev, x: prev.x + 1 }
+            : { ...prev, o: prev.o + 1 }
+          );
+          setShowConfetti(true);
+          setAnimateWinner(true);
+          setWinningTiles(line); // Set winning tiles
+          setTimeout(() => {
+            alert(`Player ${i+1} wins!`);
+            setShowConfetti(false);
+            setAnimateWinner(false);
+          }, 100);
+          return;
+        }
       }
     }
     if (b.flat().every(Boolean)) {
@@ -81,7 +123,81 @@ function App() {
     setBoard(emptyBoard);
     setCurrPlayer(1);
     setGameOver(false);
+    setWinningTiles([]); // Reset winning tiles
   };
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: '#1a232c',
+          zIndex: 10000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'none',
+          opacity: fade === 'in' ? 1 : 0,
+          transition: 'opacity 0.4s'
+        }}
+      >
+        {/* Custom Mouse Cursor */}
+        <div
+          style={{
+            position: 'fixed',
+            left: mouse.x,
+            top: mouse.y,
+            width: 32,
+            height: 32,
+            pointerEvents: 'none',
+            zIndex: 10001,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            border: '2px solid #2ec4b6',
+            background: 'rgba(46,196,182,0.12)',
+            boxShadow: '0 2px 8px #2ec4b633',
+            transition: 'background 0.15s, border 0.15s',
+            mixBlendMode: 'exclusion'
+          }}
+        />
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: '5px solid #2ec4b6',
+              borderTop: '5px solid transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              marginBottom: 18
+            }}
+          />
+          <div style={{
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 22,
+            letterSpacing: 1
+          }}>
+            Loading...
+          </div>
+        </div>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg);}
+              100% { transform: rotate(360deg);}
+            }
+          `}
+        </style>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -97,9 +213,30 @@ function App() {
         maxWidth: '100vw',
         boxSizing: 'border-box',
         fontFamily: 'Inter, Arial, sans-serif',
-        transition: 'background 0.5s'
+        transition: 'background 0.5s, opacity 0.4s',
+        cursor: 'none',
+        opacity: fade === 'in' ? 0 : 1 // Fade in after loading
       }}
     >
+      {/* Custom Mouse Cursor */}
+      <div
+        style={{
+          position: 'fixed',
+          left: mouse.x,
+          top: mouse.y,
+          width: 32,
+          height: 32,
+          pointerEvents: 'none',
+          zIndex: 9999,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          border: '2px solid #2ec4b6',
+          background: 'rgba(46,196,182,0.12)',
+          boxShadow: '0 2px 8px #2ec4b633',
+          transition: 'background 0.15s, border 0.15s',
+          mixBlendMode: 'exclusion'
+        }}
+      />
       {/* Confetti on win */}
       {showConfetti && (
         <Confetti
@@ -291,7 +428,7 @@ function App() {
               animation: animateWinner ? 'winnerPulse 0.7s' : 'fadeInUp 0.7s'
             }}
           >
-            <Board board={board} onTileClick={handleTileClick} />
+            <Board board={board} onTileClick={handleTileClick} winningTiles={winningTiles} />
           </div>
           <button
             onClick={restart}
